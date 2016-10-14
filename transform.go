@@ -19,7 +19,8 @@ import (
 )
 
 // transform takes a type of file (subfolder of assets directory: js, css, etc)
-// and a full path to the file to transform
+// and a full path to the file to transform and returns the full path to the
+// transformed file.
 func (p Pipedream) transform(typ, file string) (string, error) {
 	fn, err := mkFileNaming(p.In, p.Out, typ, file)
 	if err != nil {
@@ -93,11 +94,13 @@ func (p Pipedream) transform(typ, file string) (string, error) {
 		return "", errors.Wrap(err, "failed to close final output")
 	}
 
+	var fileName string
 	if !p.NoHash {
-		fn.Filename = fmt.Sprintf("%s-%x.%s", fn.Filename, fingerprint.Sum(nil), fn.Extension)
+		fileName = fmt.Sprintf("%s-%x.%s", fn.Filename, fingerprint.Sum(nil), fn.Extension)
 	} else {
-		fn.Filename = fmt.Sprintf("%s.%s", fn.Filename, fn.Extension)
+		fileName = fmt.Sprintf("%s.%s", fn.Filename, fn.Extension)
 	}
+	fileName = filepath.Join(fn.AbsOutPath, fileName)
 
 	if !p.NoCompress {
 		if err = compressor.Close(); err != nil {
@@ -107,18 +110,23 @@ func (p Pipedream) transform(typ, file string) (string, error) {
 			return "", errors.Wrap(err, "failed to close compressed output")
 		}
 
-		if err = os.Rename(fn.OutFile+".gz", fn.Filename+".gz"); err != nil {
+		if err = os.Rename(fn.OutFile+".gz", fileName+".gz"); err != nil {
 			return "", errors.Wrap(err, "failed to rename gzip'd output to final destination")
 		}
 	}
 
-	if err = os.Rename(fn.OutFile, fn.Filename); err != nil {
+	if err = os.Rename(fn.OutFile, fileName); err != nil {
 		return "", errors.Wrap(err, "failed to rename to final destination")
 	}
 
-	return fn.Filename, nil
+	return fileName, nil
 }
 
+// fileNaming defines the file naming for the transform.
+// The examples below are the result of an inPath and outPath of:
+//
+// inPath: /home/assets
+// outPath: /home/compiled/assets
 type fileNaming struct {
 	AbsPath    string   // /home/assets/js/homepage/app.js.ts.erb
 	AbsOutPath string   // /home/compiled/assets/js/homepage
@@ -137,7 +145,7 @@ func mkFileNaming(inPath, outPath, typ, absPath string) (fileNaming, error) {
 
 	pos := 0
 	for i := 0; i < len(fragments); i++ {
-		if fragments[i] == typ {
+		if strings.ToLower(fragments[i]) == typ {
 			pos = i
 			break
 		}
@@ -262,7 +270,7 @@ func runCmd(in piper, c Command) (piper, error) {
 	}
 
 	cmd := exec.Command(c.Cmd, args...)
-	fmt.Println("Command:", c.Cmd, "args:", args)
+
 	if c.Stdin {
 		reader, err := in.ToPipe()
 		if err != nil {

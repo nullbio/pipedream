@@ -118,6 +118,7 @@ func TestTransformMinifyOnly(t *testing.T) {
 
 	inFile := filepath.Join(testTmp, "transforms", "css", "transform_empty.css")
 	outFile := filepath.Join(testTmp, "transforms_out", "css", "transform_empty.css")
+	outFileRgx := regexp.MustCompile(`^` + testTmp + `/transforms_out/css/transform_empty-[0-9a-z]+\.css$`)
 
 	if err := os.MkdirAll(filepath.Dir(inFile), 0775); err != nil {
 		t.Fatal(err)
@@ -141,9 +142,15 @@ func TestTransformMinifyOnly(t *testing.T) {
 		Stdout: true,
 	}
 
-	p.transform("css", inFile)
+	out, err := p.transform("css", inFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !outFileRgx.MatchString(out) {
+		t.Errorf("output file path did not match regexp:\n%s\n%s", outFileRgx.String(), out)
+	}
 
-	b, err := ioutil.ReadFile(outFile)
+	b, err := ioutil.ReadFile(out)
 	if err != nil {
 		t.Fatal(err)
 	}
