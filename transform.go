@@ -9,24 +9,34 @@ import (
 )
 
 func (p Pipedream) transform(typ, file string) (string, error) {
+	return "", nil
 	// [0] = filename
 	// [1] = fileext
 	// [2..] = transformers
 	chunks := strings.Split(file, ".")
 
-	transforms = chunks[2:]
+	transforms := chunks[2:]
 	if p.NoCompile || len(transforms) == 0 {
 		// DON'T
 	}
 
 	if p.NoMinify {
-		return nil
+		return "", nil
 	}
 
 	// minify
+	return "", nil
 }
 
-type inputer interface {
+func (p Pipedream) minify(typ, file string) (string, error) {
+	return "", nil
+}
+
+func (p Pipedream) runCmd(c Command) error {
+	return nil
+}
+
+type piper interface {
 	ToPipe() (io.Reader, error)
 	ToFile(string) (string, error)
 }
@@ -34,65 +44,55 @@ type inputer interface {
 type inputFile string
 
 func (i inputFile) ToPipe() (io.Reader, error) {
-	b, err := ioutil.ReadFile(i)
+	b, err := ioutil.ReadFile(string(i))
 	if err != nil {
 		return nil, err
 	}
 
-	return bytes.NewReader(b), err
+	return bytes.NewReader(b), nil
 }
 
-func (i inputFile) ToFile(dest string) (string, error) {
-	if len(dest) == 0 || i == dest {
-		return i, err
+func (i inputFile) ToFile(dstFile string) (string, error) {
+	srcFile := string(i)
+	if len(dstFile) != 0 && srcFile == dstFile {
+		return srcFile, nil
 	}
 
-	src, err := os.Open(i)
+	src, err := os.Open(srcFile)
 	if err != nil {
 		return "", err
 	}
 	defer src.Close()
 
-	dst, err := os.Create(dest)
+	return writeDstFile(dstFile, src)
+}
+
+type inputBuffer bytes.Buffer
+
+func (i *inputBuffer) ToPipe() (io.Reader, error) {
+	return (*bytes.Buffer)(i), nil
+}
+
+func (i *inputBuffer) ToFile(dstFile string) (string, error) {
+	buf := (*bytes.Buffer)(i)
+	return writeDstFile(dstFile, buf)
+}
+
+func writeDstFile(dstFile string, src io.Reader) (string, error) {
+	var dst *os.File
+	var err error
+
+	if len(dstFile) != 0 {
+		dst, err = os.Create(dstFile)
+	} else {
+		dst, err = ioutil.TempFile("", "pipedream")
+		dstFile = dst.Name()
+	}
 	if err != nil {
 		return "", err
 	}
 	defer dst.Close()
 
 	_, err = io.Copy(dst, src)
-	return err
-}
-
-type inputBuffer bytes.Buffer
-
-func (i *inputBuffer) ToPipe() (io.Reader, error) {
-	return *bytes.Buffer(i), nil
-}
-
-func (i *inputBuffer) ToFile(dest string) (string, error) {
-	var f *os.File
-	var err error
-
-	if len(dest) != 0 {
-		f, err := os.Create(dest)
-	} else {
-		f, err := ioutil.TempFile("", "pipedream")
-	}
-	if err != nil {
-		return "", err
-	}
-
-	buf := *bytes.Buffer(i)
-	if _, err = io.Copy(f, buf); err != nil {
-		return "", err
-	}
-
-	fname := f.Name()
-	return fname, f.Close()
-}
-
-func (p Pipedream) minify(typ, file string) (string, error) {
-}
-
-func (p Pipedream) runCmd(c Command) error {
+	return dstFile, err
 }
