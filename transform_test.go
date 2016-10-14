@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -56,6 +58,55 @@ func TestTransform(t *testing.T) {
 	if string(b) != testTransformFile {
 		t.Errorf("file was wrong:\n%x\n%s", b, b)
 	}*/
+}
+
+func TestMkFileNaming(t *testing.T) {
+	t.Parallel()
+
+	inPath := "/in_stuff/assets.folder"
+	outPath := "/out_stuff/assets.folder"
+	typ := "css"
+	absPath := "/in_stuff/assets.folder/css/my.things/file.thing.css.scss.erb"
+	absOutPath := "/out_stuff/assets.folder/css/my.things"
+	filename := "file.thing"
+	extension := "css"
+	extensions := []string{"scss", "erb"}
+	outfile := regexp.MustCompile(`^(?i)/out_stuff/assets.folder/css/my.things/file\.thing-[0-9]+\.css$`)
+
+	r, err := mkFileNaming(
+		inPath,
+		outPath,
+		typ,
+		absPath,
+	)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if r.AbsPath != absPath {
+		t.Errorf("AbsPatch mismatch\nwant: %s\ngot: %s", absPath, r.AbsPath)
+	}
+
+	if r.AbsOutPath != absOutPath {
+		t.Errorf("AbsOutPath mismatch\nwant: %s\ngot: %s", absOutPath, r.AbsOutPath)
+	}
+
+	if r.Filename != filename {
+		t.Errorf("Filename mismatch\nwant: %s\ngot: %s", filename, r.Filename)
+	}
+
+	if r.Extension != extension {
+		t.Errorf("Extension mismatch\nwant: %s\ngot: %s", extension, r.Extension)
+	}
+
+	if !outfile.MatchString(r.OutFile) {
+		t.Errorf("OutFile mismatch, got: %s", r.OutFile)
+	}
+
+	if !reflect.DeepEqual(extensions, r.Extensions) {
+		t.Errorf("Extensions mismatch\nwant: %v\ngot: %v", extensions, r.Extensions)
+	}
 }
 
 func TestTransformMinifyOnly(t *testing.T) {

@@ -37,7 +37,7 @@ func (p Pipedream) transform(typ, file string) (string, error) {
 	}
 
 	outputters := make([]io.Writer, 0, 2)
-	finalOutput, err := os.Create(fn.Tmp)
+	finalOutput, err := os.Create(fn.OutFile)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to create intermediate output file")
 	}
@@ -52,7 +52,7 @@ func (p Pipedream) transform(typ, file string) (string, error) {
 	var compressedOutput io.WriteCloser
 	var compressor io.WriteCloser
 	if !p.NoCompress {
-		compressedOutput, err = os.Create(fn.Tmp + ".gz")
+		compressedOutput, err = os.Create(fn.OutFile + ".gz")
 		if err != nil {
 			return "", errors.Wrap(err, "failed to create intermediate output file")
 		}
@@ -107,12 +107,12 @@ func (p Pipedream) transform(typ, file string) (string, error) {
 			return "", errors.Wrap(err, "failed to close compressed output")
 		}
 
-		if err = os.Rename(fn.Tmp+".gz", fn.Filename+".gz"); err != nil {
+		if err = os.Rename(fn.OutFile+".gz", fn.Filename+".gz"); err != nil {
 			return "", errors.Wrap(err, "failed to rename gzip'd output to final destination")
 		}
 	}
 
-	if err = os.Rename(fn.Tmp, fn.Filename); err != nil {
+	if err = os.Rename(fn.OutFile, fn.Filename); err != nil {
 		return "", errors.Wrap(err, "failed to rename to final destination")
 	}
 
@@ -120,13 +120,12 @@ func (p Pipedream) transform(typ, file string) (string, error) {
 }
 
 type fileNaming struct {
-	AbsPath    string   // /tmp/assets/js/myapp/app.js.ts.erb
-	RelPath    string   // js/myapp/app.js
-	AbsOutPath string   // /tmp/assets/js/myapp/
+	AbsPath    string   // /home/assets/js/homepage/app.js.ts.erb
+	AbsOutPath string   // /home/compiled/assets/js/homepage
 	Filename   string   // app
 	Extension  string   // js
 	Extensions []string // [ts, erb]
-	Tmp        string   // /tmp/assets/js/myapp/app-209320932030293.js
+	OutFile    string   // /home/compiled/assets/js/homepage/app-209320932030293.js
 }
 
 func mkFileNaming(inPath, outPath, typ, absPath string) (fileNaming, error) {
@@ -135,24 +134,31 @@ func mkFileNaming(inPath, outPath, typ, absPath string) (fileNaming, error) {
 
 	filename := filepath.Base(absPath)
 	fragments := strings.Split(filename, ".")
-	if len(fragments) > 2 {
-		fn.Extensions = fragments[2:]
+
+	pos := 0
+	for i := 0; i < len(fragments); i++ {
+		if fragments[i] == typ {
+			pos = i
+			break
+		}
 	}
-	if len(fragments) > 1 {
-		fn.Extension = fragments[1]
-	}
-	fn.Filename = fragments[0]
+
+	fn.Extension = fragments[pos]
+	fn.Extensions = fragments[pos+1:]
+	fn.Filename = strings.Join(fragments[:pos], ".")
 
 	var err error
-	fn.RelPath, err = filepath.Rel(filepath.Join(inPath, typ), absPath)
+	relpath, err := filepath.Rel(filepath.Join(inPath, typ), absPath)
 	if err != nil {
 		return fn, errors.Wrap(err, "failed to find relative path")
 	}
 
-	fn.AbsOutPath = filepath.Join(outPath, filepath.Dir(fn.RelPath))
+	fn.AbsOutPath = filepath.Join(outPath, typ, filepath.Dir(relpath))
 
 	randChunk := strconv.FormatInt(time.Now().UnixNano(), 10)
-	fn.Tmp = filepath.Join(fn.AbsOutPath, fn.Filename+randChunk+fn.Extension)
+
+	outFileName := fmt.Sprintf("%s-%s.%s", fn.Filename, randChunk, fn.Extension)
+	fn.OutFile = filepath.Join(fn.AbsOutPath, outFileName)
 
 	return fn, nil
 }
@@ -160,7 +166,7 @@ func mkFileNaming(inPath, outPath, typ, absPath string) (fileNaming, error) {
 func (p Pipedream) runPipeline(typ string, exts []string, out piper) (piper, error) {
 	var err error
 
-	pipeline := make([]transformer, 0)
+	var pipeline []transformer
 	if !p.NoCompile {
 		for i := len(exts) - 1; i >= 0; i-- {
 			pipeline = append(pipeline, p.compiler(typ, exts[i]))
