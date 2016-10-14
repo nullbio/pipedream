@@ -58,7 +58,7 @@ func TestTransform(t *testing.T) {
 	}*/
 }
 
-func TestTransformEmpty(t *testing.T) {
+func TestTransformMinifyOnly(t *testing.T) {
 	t.Parallel()
 
 	if err := os.MkdirAll(filepath.Join(testTmp, "transforms", "js"), 0775); err != nil {
@@ -66,15 +66,25 @@ func TestTransformEmpty(t *testing.T) {
 	}
 
 	inFile := filepath.Join(testTmp, "transforms", "css", "transform_empty.css")
-	outFile := filepath.Join(testTmp, "tranforms_out", "css", "transform_empty.min.css")
+	outFile := filepath.Join(testTmp, "transforms_out", "css", "transform_empty.css")
+
+	if err := os.MkdirAll(filepath.Dir(inFile), 0775); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(outFile), 0775); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := ioutil.WriteFile(inFile, []byte(testTransformFile), 0664); err != nil {
 		t.Fatal(err)
 	}
 
 	var p Pipedream
+	p.In = filepath.Join(testTmp, "transforms")
+	p.Out = filepath.Join(testTmp, "transforms_out")
+	p.NoCompress = true
 
-	p.JS.Minifier = Command{
+	p.CSS.Minifier = Command{
 		Cmd:    "cat",
 		Args:   []string{"$infile"},
 		Stdout: true,
@@ -122,9 +132,13 @@ func TestInputFileToFile(t *testing.T) {
 	}
 
 	in := inputFile(inFile)
-	filename, err := in.ToFile("")
+	filename, err := in.ToFile()
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	if filename != inFile {
+		t.Error("filename should not change:", filename)
 	}
 
 	b, err := ioutil.ReadFile(filename)
@@ -141,7 +155,7 @@ func TestInputBufferToFile(t *testing.T) {
 	t.Parallel()
 
 	buf := (*inputBuffer)(bytes.NewBuffer([]byte(testTransformFile)))
-	filename, err := buf.ToFile("")
+	filename, err := buf.ToFile()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -7,8 +7,10 @@ type Pipedream struct {
 	In  string `toml:"in"`
 	Out string `toml:"out"`
 
-	NoCompile bool `toml:"no_compile"`
-	NoMinify  bool `toml:"no_minify"`
+	NoCompile  bool `toml:"no_compile"`
+	NoMinify   bool `toml:"no_minify"`
+	NoHash     bool `toml:"no_hash"`
+	NoCompress bool `toml:"no_compress"`
 
 	JS     Exes `toml:"js"`
 	CSS    Exes `toml:"css"`
