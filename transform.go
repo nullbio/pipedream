@@ -22,7 +22,7 @@ import (
 // and a full path to the file to transform and returns the full path to the
 // transformed file.
 func (p Pipedream) transform(typ, file string) (string, error) {
-	fn, err := mkFileNaming(p.In, p.Out, typ, file)
+	fn, err := p.mkFileNaming(typ, file)
 	if err != nil {
 		return "", err
 	}
@@ -136,17 +136,20 @@ type fileNaming struct {
 	OutFile    string   // /home/compiled/assets/js/homepage/app-209320932030293.js
 }
 
-func mkFileNaming(inPath, outPath, typ, absPath string) (fileNaming, error) {
+func (p Pipedream) mkFileNaming(typ, absPath string) (fileNaming, error) {
 	fn := fileNaming{}
 	fn.AbsPath = absPath
 
 	filename := filepath.Base(absPath)
 	fragments := strings.Split(filename, ".")
 
-	pos := 0
-	for i := 0; i < len(fragments); i++ {
-		if strings.ToLower(fragments[i]) == typ {
-			pos = i
+	var pos int
+	for pos = len(fragments) - 1; pos >= 0; pos-- {
+		exes, ok := p.exes(typ)
+		if !ok {
+			return fn, errors.Errorf("failed to find executables for type: %s", typ)
+		}
+		if _, ok := exes.Compilers[strings.ToLower(fragments[pos])]; !ok {
 			break
 		}
 	}
@@ -156,12 +159,12 @@ func mkFileNaming(inPath, outPath, typ, absPath string) (fileNaming, error) {
 	fn.Filename = strings.Join(fragments[:pos], ".")
 
 	var err error
-	relpath, err := filepath.Rel(filepath.Join(inPath, typ), absPath)
+	relpath, err := filepath.Rel(filepath.Join(p.In, typ), absPath)
 	if err != nil {
 		return fn, errors.Wrap(err, "failed to find relative path")
 	}
 
-	fn.AbsOutPath = filepath.Join(outPath, typ, filepath.Dir(relpath))
+	fn.AbsOutPath = filepath.Join(p.Out, typ, filepath.Dir(relpath))
 
 	randChunk := strconv.FormatInt(time.Now().UnixNano(), 10)
 

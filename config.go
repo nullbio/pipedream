@@ -40,3 +40,23 @@ func New(file string) (Pipedream, error) {
 
 	return pipedream, err
 }
+
+// exes returns the exe for typ
+func (p Pipedream) exes(typ string) (exe Exes, ok bool) {
+	switch typ {
+	case "js":
+		return p.JS, true
+	case "css":
+		return p.CSS, true
+	case "img":
+		return p.Img, true
+	case "audio":
+		return p.Audio, true
+	case "fonts":
+		return p.Fonts, true
+	case "videos":
+		return p.Videos, true
+	default:
+		return exe, false
+	}
+}

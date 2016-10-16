@@ -15,31 +15,35 @@ dreaming of pipes
 `
 
 func TestTransform(t *testing.T) {
-	/*t.Parallel()
+	t.Parallel()
+
+	inFile := filepath.Join(testTmp, "transforms", "js", "transform_file.js.tee.cat")
+	outFileRgx := regexp.MustCompile(`^` + testTmp + `/transforms_out/js/transform_file-[0-9a-z]+\.js$`)
 
 	if err := os.MkdirAll(filepath.Join(testTmp, "transforms", "js"), 0775); err != nil {
 		t.Error(err)
 	}
-
-	inFile := filepath.Join(testTmp, "transforms", "javascripts", "transform_file.js.tee.cat")
-	outFile := filepath.Join(testTmp, "tranforms_out", "javascripts", "transform_file.min.js")
 
 	if err := ioutil.WriteFile(inFile, []byte(testTransformFile), 0664); err != nil {
 		t.Fatal(err)
 	}
 
 	var p Pipedream
+	p.In = filepath.Join(testTmp, "transforms")
+	p.Out = filepath.Join(testTmp, "transforms_out")
+	p.NoCompress = true
 
-	p.JS.Compilers["cat"] = Command{
-		Cmd:    "cat",
-		Stdin:  true,
-		Stdout: true,
-	}
-
-	p.JS.Compilers["tee"] = Command{
-		Cmd:   "tee",
-		Args:  []string{"$outfile"},
-		Stdin: true,
+	p.JS.Compilers = map[string]Command{
+		"cat": Command{
+			Cmd:    "cat",
+			Stdin:  true,
+			Stdout: true,
+		},
+		"tee": Command{
+			Cmd:   "tee",
+			Args:  []string{"$outfile"},
+			Stdin: true,
+		},
 	}
 
 	p.JS.Minifier = Command{
@@ -48,16 +52,22 @@ func TestTransform(t *testing.T) {
 		Stdout: true,
 	}
 
-	p.transform("js", inFile)
+	out, err := p.transform("js", inFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !outFileRgx.MatchString(out) {
+		t.Errorf("output file path did not match regexp:\n%s\n%s", outFileRgx.String(), out)
+	}
 
-	b, err := ioutil.ReadFile(outFile)
+	b, err := ioutil.ReadFile(out)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if string(b) != testTransformFile {
 		t.Errorf("file was wrong:\n%x\n%s", b, b)
-	}*/
+	}
 }
 
 func TestMkFileNaming(t *testing.T) {
@@ -73,9 +83,13 @@ func TestMkFileNaming(t *testing.T) {
 	extensions := []string{"scss", "erb"}
 	outfile := regexp.MustCompile(`^(?i)/out_stuff/assets.folder/css/my.things/file\.thing-[0-9]+\.css$`)
 
-	r, err := mkFileNaming(
-		inPath,
-		outPath,
+	p := Pipedream{In: inPath, Out: outPath}
+	p.CSS.Compilers = map[string]Command{
+		"erb":  Command{},
+		"scss": Command{},
+	}
+
+	r, err := p.mkFileNaming(
 		typ,
 		absPath,
 	)
@@ -117,13 +131,9 @@ func TestTransformMinifyOnly(t *testing.T) {
 	}
 
 	inFile := filepath.Join(testTmp, "transforms", "css", "transform_empty.css")
-	outFile := filepath.Join(testTmp, "transforms_out", "css", "transform_empty.css")
 	outFileRgx := regexp.MustCompile(`^` + testTmp + `/transforms_out/css/transform_empty-[0-9a-z]+\.css$`)
 
 	if err := os.MkdirAll(filepath.Dir(inFile), 0775); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Dir(outFile), 0775); err != nil {
 		t.Fatal(err)
 	}
 
