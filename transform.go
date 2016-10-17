@@ -164,7 +164,7 @@ func (p Pipedream) mkFileNaming(typ, absPath string) (fileNaming, error) {
 		return fn, errors.Wrap(err, "failed to find relative path")
 	}
 
-	fn.AbsOutPath = filepath.Join(p.Out, typ, filepath.Dir(relpath))
+	fn.AbsOutPath = filepath.Join(p.Out, "assets", typ, filepath.Dir(relpath))
 
 	randChunk := strconv.FormatInt(time.Now().UnixNano(), 10)
 

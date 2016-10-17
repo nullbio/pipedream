@@ -18,7 +18,7 @@ func TestTransform(t *testing.T) {
 	t.Parallel()
 
 	inFile := filepath.Join(testTmp, "transforms", "js", "transform_file.js.tee.cat")
-	outFileRgx := regexp.MustCompile(`^` + testTmp + `/transforms_out/js/transform_file-[0-9a-z]+\.js$`)
+	outFileRgx := regexp.MustCompile(`^` + testTmp + `/transforms_out/assets/js/transform_file-[0-9a-z]+\.js$`)
 
 	if err := os.MkdirAll(filepath.Join(testTmp, "transforms", "js"), 0775); err != nil {
 		t.Error(err)
@@ -74,14 +74,14 @@ func TestMkFileNaming(t *testing.T) {
 	t.Parallel()
 
 	inPath := "/in_stuff/assets.folder"
-	outPath := "/out_stuff/assets.folder"
+	outPath := "/out.stuff/"
 	typ := "css"
 	absPath := "/in_stuff/assets.folder/css/my.things/file.thing.css.scss.erb"
-	absOutPath := "/out_stuff/assets.folder/css/my.things"
+	absOutPath := "/out.stuff/assets/css/my.things"
 	filename := "file.thing"
 	extension := "css"
 	extensions := []string{"scss", "erb"}
-	outfile := regexp.MustCompile(`^(?i)/out_stuff/assets.folder/css/my.things/file\.thing-[0-9]+\.css$`)
+	outfile := regexp.MustCompile(`^(?i)/out.stuff/assets/css/my.things/file\.thing-[0-9]+\.css$`)
 
 	p := Pipedream{In: inPath, Out: outPath}
 	p.CSS.Compilers = map[string]Command{
@@ -131,7 +131,7 @@ func TestTransformMinifyOnly(t *testing.T) {
 	}
 
 	inFile := filepath.Join(testTmp, "transforms", "css", "transform_empty.css")
-	outFileRgx := regexp.MustCompile(`^` + testTmp + `/transforms_out/css/transform_empty-[0-9a-z]+\.css$`)
+	outFileRgx := regexp.MustCompile(`^` + testTmp + `/transforms_out/assets/css/transform_empty-[0-9a-z]+\.css$`)
 
 	if err := os.MkdirAll(filepath.Dir(inFile), 0775); err != nil {
 		t.Fatal(err)
