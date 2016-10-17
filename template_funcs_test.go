@@ -105,6 +105,38 @@ func TestTemplatePathsFingerprint(t *testing.T) {
 
 var testManifest = `
 {
+	"files": {
+		"/assets/js/test/javascript-abc.js": {
+			"mtime": "2016-06-18T14:18:44-07:00",
+			"size": 158986,
+			"digest": "abc"
+		},
+		"/assets/css/stylesheet-def.css": {
+			"mtime": "2016-06-18T14:18:44-07:00",
+			"size": 158986,
+			"digest": "def"
+		},
+		"/assets/img/image-ghi.png": {
+			"mtime": "2016-06-18T14:18:44-07:00",
+			"size": 158986,
+			"digest": "png"
+		},
+		"/assets/videos/video-jkl.mp4": {
+			"mtime": "2016-06-18T14:18:44-07:00",
+			"size": 158986,
+			"digest": "mp4"
+		},
+		"/assets/audio/audio-mno.ogg": {
+			"mtime": "2016-06-18T14:18:44-07:00",
+			"size": 158986,
+			"digest": "ogg"
+		},
+		"/assets/fonts/font-pqr.ttf": {
+			"mtime": "2016-06-18T14:18:44-07:00",
+			"size": 158986,
+			"digest": "ttf"
+		}
+	},
 	"assets": {
 		"js/test/javascript.js": "/assets/js/test/javascript-abc.js",
 		"css/stylesheet.css": "/assets/css/stylesheet-def.css",

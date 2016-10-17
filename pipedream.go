@@ -9,12 +9,6 @@ import (
 )
 
 /*
-1. Handler functions
-  js_tag
-  css_tag
-  img_tag
-2. Fingerprinting
-3. Compilation based on file extensions and folder names
 4. On the fly compilation middlewares
 5. Compiler command line
 */

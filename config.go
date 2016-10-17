@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -56,7 +57,15 @@ type Command struct {
 
 // Manifest for compiled assets
 type Manifest struct {
-	Assets map[string]string `json:"assets"`
+	Files  map[string]FileInfo `json:"files"`
+	Assets map[string]string   `json:"assets"`
+}
+
+// FileInfo keeps various properties about a file
+type FileInfo struct {
+	Digest string    `json:"digest"`
+	MTime  time.Time `json:"mtime"`
+	Size   uint64    `json:"size"`
 }
 
 // New loads a configuration
