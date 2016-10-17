@@ -2,7 +2,7 @@ package pipedream
 
 import "github.com/BurntSushi/toml"
 
-// Config for pipedream
+// Pipedream is the config for pipedream
 type Pipedream struct {
 	In  string `toml:"in"`
 	Out string `toml:"out"`
@@ -20,6 +20,7 @@ type Pipedream struct {
 	Videos Exes `toml:"videos"`
 }
 
+// Exes holds the compilers and minifiers for each file type
 type Exes struct {
 	Compilers map[string]Command `toml:"compilers"`
 	Minifier  Command            `toml:"minifier"`
@@ -42,7 +43,7 @@ func New(file string) (Pipedream, error) {
 }
 
 // exes returns the exe for typ
-func (p Pipedream) exes(typ string) (exe Exes, ok bool) {
+func (p Pipedream) exes(typ string) (exes Exes, ok bool) {
 	switch typ {
 	case "js":
 		return p.JS, true
@@ -57,6 +58,6 @@ func (p Pipedream) exes(typ string) (exe Exes, ok bool) {
 	case "videos":
 		return p.Videos, true
 	default:
-		return exe, false
+		return exes, false
 	}
 }
