@@ -58,7 +58,7 @@ func (p Pipedream) transform(typ, file string) (string, error) {
 			return "", errors.Wrap(err, "failed to create intermediate output file")
 		}
 
-		compressor, err = gzip.NewWriterLevel(compressedOutput, gzip.BestSpeed)
+		compressor, err = gzip.NewWriterLevel(compressedOutput, gzip.BestCompression)
 		if err != nil {
 			return "", errors.Wrap(err, "failed to create gzip writer")
 		}
