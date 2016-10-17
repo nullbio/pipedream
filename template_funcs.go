@@ -44,5 +44,5 @@ func (p Pipedream) lookupPath(typ, file string) string {
 		panic(fmt.Sprintf("asset %s requested but was not in manifest, did you rememeber to precompile assets?", key))
 	}
 
-	return asset
+	return p.CDNURL + asset
 }

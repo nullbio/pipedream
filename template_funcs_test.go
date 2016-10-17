@@ -89,13 +89,16 @@ func TestTemplatePathsFingerprint(t *testing.T) {
 	if got := p.ImgPath("image.png"); got != "/assets/img/image-ghi.png" {
 		t.Error("path was wrong:", got)
 	}
-	if got := p.VideoPath("video.mp4"); got != "/assets/videos/video-jkl.mp4" {
+
+	p.CDNURL = "https://assets.com/hack"
+
+	if got := p.VideoPath("video.mp4"); got != "https://assets.com/hack/assets/videos/video-jkl.mp4" {
 		t.Error("path was wrong:", got)
 	}
-	if got := p.AudioPath("audio.ogg"); got != "/assets/audio/audio-mno.ogg" {
+	if got := p.AudioPath("audio.ogg"); got != "https://assets.com/hack/assets/audio/audio-mno.ogg" {
 		t.Error("path was wrong:", got)
 	}
-	if got := p.FontPath("font.ttf"); got != "/assets/fonts/font-pqr.ttf" {
+	if got := p.FontPath("font.ttf"); got != "https://assets.com/hack/assets/fonts/font-pqr.ttf" {
 		t.Error("path was wrong:", got)
 	}
 }
