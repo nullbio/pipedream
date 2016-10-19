@@ -1,7 +1,6 @@
 package pipedream
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -260,6 +259,7 @@ func (d DynamicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	// If file exists, and if out file is newer, serve out file
 	if err == nil && outFileInfo.ModTime().After(inFileInfo.ModTime()) {
 		goto ServeFile
@@ -273,7 +273,6 @@ func (d DynamicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 ServeFile:
-	fmt.Println(fileInfo.outPath)
 	file, err := os.Open(fileInfo.outPath)
 	if os.IsNotExist(err) {
 		w.WriteHeader(http.StatusNotFound)

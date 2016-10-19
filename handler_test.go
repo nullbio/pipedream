@@ -199,22 +199,166 @@ func TestDynamicHandler(t *testing.T) {
 	})
 
 	t.Run("ServeNoTransform", func(t *testing.T) {
+		p.JS.Compilers = map[string]Command{}
+		p.JS.Minifier = Command{}
 
+		inFile := filepath.Join(testTmp, "dynamic", "assets", "js", "transform_file1.js")
+		outFile := filepath.Join(testTmp, "dynamic", "cached", "assets", "js", "transform_file1.js")
+		if err := ioutil.WriteFile(inFile, []byte(testTransformFile), 0664); err != nil {
+			t.Fatal(err)
+		}
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/assets/js/transform_file1.js", nil)
+		p.DynamicHandler(nil).ServeHTTP(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatal("wanted status ok, got:", w.Code)
+		}
+
+		if bs := w.Body.String(); bs != testTransformFile {
+			t.Errorf("body mismatch, got:\n%s", bs)
+		}
+
+		_, err := os.Stat(outFile)
+		if err == nil {
+			t.Errorf("Expected output file to be missing")
+		}
 	})
 
 	t.Run("ServeCached", func(t *testing.T) {
+		p.JS.Compilers = map[string]Command{
+			"cat": Command{
+				Cmd:    "cat",
+				Stdin:  true,
+				Stdout: true,
+			},
+			"tee": Command{
+				Cmd:   "tee",
+				Args:  []string{"$outfile"},
+				Stdin: true,
+			},
+		}
 
+		p.JS.Minifier = Command{
+			Cmd:    "cat",
+			Args:   []string{"$infile"},
+			Stdout: true,
+		}
+
+		inFile := filepath.Join(testTmp, "dynamic", "assets", "js", "transform_file2.js.tee.cat")
+		outFile := filepath.Join(testTmp, "dynamic", "cached", "assets", "js", "transform_file2.js")
+		if err := ioutil.WriteFile(inFile, []byte(`old file`), 0664); err != nil {
+			t.Fatal(err)
+		}
+		time.Sleep(time.Millisecond * 10)
+		if err := ioutil.WriteFile(outFile, []byte(testTransformFile), 0664); err != nil {
+			t.Fatal(err)
+		}
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/assets/js/transform_file2.js", nil)
+		p.DynamicHandler(nil).ServeHTTP(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatal("wanted status ok, got:", w.Code)
+		}
+
+		if bs := w.Body.String(); bs != testTransformFile {
+			t.Errorf("body mismatch, got:\n%s", bs)
+		}
+
+		_, err := os.Stat(outFile)
+		if err != nil {
+			t.Errorf("Expected output file at %s", outFile)
+		}
 	})
 
 	t.Run("RefreshCached", func(t *testing.T) {
+		p.JS.Compilers = map[string]Command{
+			"cat": Command{
+				Cmd:    "cat",
+				Stdin:  true,
+				Stdout: true,
+			},
+			"tee": Command{
+				Cmd:   "tee",
+				Args:  []string{"$outfile"},
+				Stdin: true,
+			},
+		}
 
+		p.JS.Minifier = Command{
+			Cmd:    "cat",
+			Args:   []string{"$infile"},
+			Stdout: true,
+		}
+
+		inFile := filepath.Join(testTmp, "dynamic", "assets", "js", "transform_file3.js.tee.cat")
+		outFile := filepath.Join(testTmp, "dynamic", "cached", "assets", "js", "transform_file3.js")
+		if err := ioutil.WriteFile(outFile, []byte(`old file`), 0664); err != nil {
+			t.Fatal(err)
+		}
+		time.Sleep(time.Millisecond * 10)
+		if err := ioutil.WriteFile(inFile, []byte(testTransformFile), 0664); err != nil {
+			t.Fatal(err)
+		}
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/assets/js/transform_file3.js", nil)
+		p.DynamicHandler(nil).ServeHTTP(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatal("wanted status ok, got:", w.Code)
+		}
+
+		if bs := w.Body.String(); bs != testTransformFile {
+			t.Errorf("body mismatch, got:\n%s", bs)
+		}
+
+		_, err := os.Stat(outFile)
+		if err != nil {
+			t.Errorf("Expected output file at %s", outFile)
+		}
 	})
 
 	t.Run("BadTypeNotFound", func(t *testing.T) {
+		p.JS.Compilers = map[string]Command{}
+		p.JS.Minifier = Command{}
 
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/assets/bad/transform_file.js", nil)
+		p.DynamicHandler(nil).ServeHTTP(w, r)
+
+		if w.Code != http.StatusNotFound {
+			t.Fatal("wanted status not found, got:", w.Code)
+		}
 	})
 
 	t.Run("BadPathNotFound", func(t *testing.T) {
+		p.JS.Compilers = map[string]Command{}
+		p.JS.Minifier = Command{}
 
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/assets/js/", nil)
+		p.DynamicHandler(nil).ServeHTTP(w, r)
+
+		if w.Code != http.StatusNotFound {
+			t.Fatal("wanted status not found, got:", w.Code)
+		}
+
+		r = httptest.NewRequest("GET", "/assets/js/thing.js", nil)
+		p.DynamicHandler(nil).ServeHTTP(w, r)
+
+		if w.Code != http.StatusNotFound {
+			t.Fatal("wanted status not found, got:", w.Code)
+		}
+
+		r = httptest.NewRequest("GET", "/assets/js/thing.js/", nil)
+		p.DynamicHandler(nil).ServeHTTP(w, r)
+
+		if w.Code != http.StatusNotFound {
+			t.Fatal("wanted status not found, got:", w.Code)
+		}
 	})
 }
