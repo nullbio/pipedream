@@ -14,6 +14,10 @@ var testTransformFile = `
 dreaming of pipes
 `
 
+var testTransformFileGZ = `
+dreaming of compressed pipes
+`
+
 func TestTransform(t *testing.T) {
 	t.Parallel()
 
@@ -126,12 +130,12 @@ func TestMkFileNaming(t *testing.T) {
 func TestTransformMinifyOnly(t *testing.T) {
 	t.Parallel()
 
-	if err := os.MkdirAll(filepath.Join(testTmp, "transforms", "js"), 0775); err != nil {
+	if err := os.MkdirAll(filepath.Join(testTmp, "minify", "js"), 0775); err != nil {
 		t.Error(err)
 	}
 
-	inFile := filepath.Join(testTmp, "transforms", "css", "transform_empty.css")
-	outFileRgx := regexp.MustCompile(`^` + testTmp + `/transforms_out/assets/css/transform_empty-[0-9a-z]+\.css$`)
+	inFile := filepath.Join(testTmp, "minify", "css", "transform_empty.css")
+	outFileRgx := regexp.MustCompile(`^` + testTmp + `/minify_out/assets/css/transform_empty-[0-9a-z]+\.css$`)
 
 	if err := os.MkdirAll(filepath.Dir(inFile), 0775); err != nil {
 		t.Fatal(err)
@@ -142,8 +146,8 @@ func TestTransformMinifyOnly(t *testing.T) {
 	}
 
 	var p Pipedream
-	p.In = filepath.Join(testTmp, "transforms")
-	p.Out = filepath.Join(testTmp, "transforms_out")
+	p.In = filepath.Join(testTmp, "minify")
+	p.Out = filepath.Join(testTmp, "minify_out")
 	p.NoCompress = true
 
 	p.CSS.Minifier = Command{
