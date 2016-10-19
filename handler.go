@@ -9,7 +9,7 @@ import (
 
 // StaticHandler serves static assets from the out path.
 func (p *Pipedream) StaticHandler(w http.ResponseWriter, r *http.Request) {
-	urlPath := strings.Replace(strings.Replace(r.URL.Path, "..", "", -1), os.PathSeparator+".", "", -1)
+	urlPath := strings.Replace(strings.Replace(r.URL.Path, "..", "", -1), string(os.PathSeparator)+".", "", -1)
 
 	fileInfo, ok := p.Manifest.Files[urlPath]
 	if !ok {
@@ -18,7 +18,7 @@ func (p *Pipedream) StaticHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	acceptEncodings := r.Header.Get("Accept-Encoding")
-	encodings := strings.Split(acceptEncodings)
+	encodings := strings.Split(acceptEncodings, ",")
 	useGzip := false
 	for _, e := range encodings {
 		if strings.HasPrefix(e, "gzip") {
@@ -27,7 +27,9 @@ func (p *Pipedream) StaticHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	urlPath += ".gz"
+	if useGzip {
+		urlPath += ".gz"
+	}
 	fileLoc := filepath.Join(p.Out, urlPath)
 	file, err := os.Open(fileLoc)
 	if os.IsNotExist(err) {
@@ -40,7 +42,7 @@ func (p *Pipedream) StaticHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Md5", fileInfo.Digest)
 	w.Header().Set("ETag", `"`+fileInfo.Digest+`"`)
-	http.ServeContent(w, r, urlPath, fileInfo.MTime)
+	http.ServeContent(w, r, urlPath, fileInfo.MTime, file)
 
 	_ = file.Close()
 }

@@ -31,14 +31,18 @@ type Pipedream struct {
 	NoHash     bool `toml:"no_hash"`
 	NoCompress bool `toml:"no_compress"`
 
+	Executables
+	Manifest Manifest `toml:"-"`
+}
+
+// Executables are the compilers and minifiers used by the various file types
+type Executables struct {
 	JS     Exes `toml:"js"`
 	CSS    Exes `toml:"css"`
 	Img    Exes `toml:"img"`
 	Audio  Exes `toml:"audio"`
 	Videos Exes `toml:"videos"`
 	Fonts  Exes `toml:"fonts"`
-
-	Manifest Manifest `toml:"-"`
 }
 
 // Exes holds the compilers and minifiers for each file type
@@ -47,7 +51,8 @@ type Exes struct {
 	Minifier  Command            `toml:"minifier"`
 }
 
-// Command is an executable that can be run to produce a file
+// Command is an executable that can be run to consume input and produce output
+// files.
 type Command struct {
 	Cmd    string   `toml:"cmd"`
 	Args   []string `toml:"args"`
