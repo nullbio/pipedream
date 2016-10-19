@@ -114,10 +114,7 @@ func setConfigString(inStruct *string, name string) {
 	flag := pflag.Lookup(name)
 	if flag != nil && flag.Changed {
 		*inStruct = flag.Value.String()
-		return
-	}
-
-	if env := tagEnv(name); len(env) != 0 {
+	} else if env := tagEnv(name); len(env) != 0 {
 		*inStruct = env
 	}
 }
