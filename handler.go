@@ -168,7 +168,7 @@ func (d DynamicHandler) getFileInfo(chunks []string) (fileInfo, error) {
 	}
 
 	info.inPath = filepath.Join(inPath, matchFileName)
-	info.outPath = filepath.Join(d.Out, inRelPath, fileName)
+	info.outPath = filepath.Join(d.Out, "assets", inRelPath, fileName)
 
 	return info, nil
 }
@@ -237,7 +237,6 @@ func (d DynamicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("%v", fileInfo)
 
 	// No compilers or minifiers for this asset, serve asset directly
 	if len(exes.Compilers) == 0 && len(exes.Minifier.Cmd) == 0 {
@@ -274,6 +273,7 @@ func (d DynamicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 ServeFile:
+	fmt.Println(fileInfo.outPath)
 	file, err := os.Open(fileInfo.outPath)
 	if os.IsNotExist(err) {
 		w.WriteHeader(http.StatusNotFound)
