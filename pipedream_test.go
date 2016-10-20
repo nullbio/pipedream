@@ -1,7 +1,6 @@
 package pipedream
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -36,44 +35,4 @@ func TestMain(m *testing.M) {
 	os.RemoveAll(testTmp)
 
 	os.Exit(code)
-}
-
-func TestFingerprintFile(t *testing.T) {
-	t.Parallel()
-
-	f, err := ioutil.TempFile(testTmp, "fingerprint")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(f.Name())
-
-	f.Write(testCSSFile)
-
-	if err := f.Close(); err != nil {
-		t.Fatal("failed to close css file:", err)
-	}
-
-	print, err := fingerprintFile(f.Name())
-	if err != nil {
-		t.Error(err)
-	}
-
-	if print != "78a359fd775d5e999ee0dc43a72dc862" {
-		t.Error("print was wrong:", print)
-	}
-}
-
-func TestFingerprintReader(t *testing.T) {
-	t.Parallel()
-
-	reader := bytes.NewReader(testCSSFile)
-
-	print, err := fingerprintReader(reader)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if print != "78a359fd775d5e999ee0dc43a72dc862" {
-		t.Error("print was wrong:", print)
-	}
 }

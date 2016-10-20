@@ -252,10 +252,10 @@ func mkTransformer(c Command) transformer {
 	}
 }
 
-func runCmd(in piper, c Command) (piper, error) {
+func runCmd(in piper, c Command, cmdDir string) (piper, error) {
 	var err error
 	var out piper
-	var srcFile, dstFile string
+	var srcFile, dstFile, inDir, outDir string
 
 	args := append([]string{}, c.Args...)
 	for i := 0; i < len(args); i++ {
@@ -269,10 +269,19 @@ func runCmd(in piper, c Command) (piper, error) {
 		case "$outfile":
 			dstFile = randomTmpFileName()
 			args[i] = dstFile
+		case "$indir":
+		case "$outdir":
 		}
 	}
 
 	cmd := exec.Command(c.Cmd, args...)
+
+	if srcFile != "" {
+		cmd.Dir = filepath.Dir(srcFile)
+	} else {
+		// input assets/typ folder
+		cmd.Dir(cmdDir)
+	}
 
 	if c.Stdin {
 		reader, err := in.ToPipe()
