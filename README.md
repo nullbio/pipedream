@@ -1,2 +1,2 @@
 # pipedream
-Asset pipeline
+Asset pipeline. Was a pipedream.
